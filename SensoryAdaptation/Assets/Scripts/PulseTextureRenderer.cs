@@ -12,7 +12,7 @@ public class PulseTextureRenderer : MonoBehaviour
 
     [SerializeField] private float amplitude = 20f;
     [SerializeField] private float frequency = 1f;
-    [SerializeField] private float speed = 2f;
+    [SerializeField] private float speed = 1f;
 
     [SerializeField] private Color pulseColor = Color.green;
     [SerializeField] private Color backgroundColor = Color.black;

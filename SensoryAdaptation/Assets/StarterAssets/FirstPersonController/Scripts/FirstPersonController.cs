@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Cinemachine;
+using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -20,6 +21,7 @@ namespace StarterAssets
 		public float RotationSpeed = 1.0f;
 		[Tooltip("Acceleration and deceleration")]
 		public float SpeedChangeRate = 10.0f;
+		[SerializeField] private float rayDistance;
 
 		[Space(10)]
 		[Tooltip("The height the player can jump")]
@@ -108,9 +110,16 @@ namespace StarterAssets
 			// reset our timeouts on start
 			_jumpTimeoutDelta = JumpTimeout;
 			_fallTimeoutDelta = FallTimeout;
+
+			_input.OnInteractEvent += Interact;
 		}
 
-		private void Update()
+        private void OnDisable()
+        {
+            _input.OnInteractEvent -= Interact;
+        }
+
+        private void Update()
 		{
 			JumpAndGravity();
 			GroundedCheck();
@@ -198,7 +207,48 @@ namespace StarterAssets
 			_controller.Move(inputDirection.normalized * (_speed * Time.deltaTime) + new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
 		}
 
-		private void JumpAndGravity()
+		public void Interact(bool state)
+		{
+			CinemachineVirtualCamera camera = FindFirstObjectByType<CinemachineVirtualCamera>();
+
+			if (state)
+			{
+				print(1);
+                Ray ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2f, Screen.height / 2f));
+                if (Physics.Raycast(ray, out RaycastHit hit, rayDistance))
+                {
+					Transform root = hit.transform.Find("CameraRoot");
+
+                    if (root != null) camera.Follow = root;
+					else _input.interact = false;
+                }
+				else
+				{
+					_input.interact = false;
+                    print(_input.interact);
+                }
+            }
+			else
+			{
+				camera.Follow = CinemachineCameraTarget.transform;
+            }
+		}
+
+        void OnDrawGizmos()
+        {
+
+            // Устанавливаем цвет гизмо
+            Gizmos.color = Color.red;
+
+            // Получаем позицию и направление камеры
+            Vector3 origin = CinemachineCameraTarget.transform.position;
+            Vector3 direction = CinemachineCameraTarget.transform.forward;
+
+            // Рисуем луч
+            Gizmos.DrawRay(origin, direction * rayDistance);
+        }
+
+        private void JumpAndGravity()
 		{
 			if (Grounded)
 			{
